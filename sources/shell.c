@@ -7,6 +7,8 @@
 #include <wait.h>
 #include <fcntl.h>
 #include <string.h>
+#include <signal.h>
+
 /* this is color
     for our freetings row
     in function print_greeetings*/
@@ -19,6 +21,8 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 int complete_exec(char ** argvec, char * pwd);
+
+pid_t gpid;
 
 /*
     IMPLEMENTING DIVIDING ON LEXEMS
@@ -132,6 +136,7 @@ int exec_pipes(char ** cmd_A, char ** cmd_B){
         dup2(fd[1], 1);
         close(fd[1]);
         close(fd[0]);
+        gpid = getpid();
         execvp(cmd_A[0], cmd_A);
         return 0;
     }
@@ -200,6 +205,7 @@ int io_direct_right(char ** argvec){
 void direct_exec_right(char ** cmd_A, char ** cmd_B){
     int fd = open(cmd_B[0], O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fork() == 0){
+        gpid = getpid();
         dup2(fd, 1);
         execvp(cmd_A[0], cmd_A);
     }
@@ -236,6 +242,7 @@ void direct_exec_left(char ** cmd_A, char ** cmd_B){
     }
     if (fork() == 0){
         dup2(fd, 0);
+        gpid = getpid();
         execvp(cmd_B[0], cmd_B);
     }
 }
@@ -290,8 +297,8 @@ char * cd_func(char ** argvec, char * pwd){
             perror("Failed to find a direcctory");
         }
         else{
-        strcat(pwd, "/");
-        strcat(pwd, argvec[1]);
+            strcat(pwd, "/");
+            strcat(pwd, argvec[1]);
         }
     }
     return pwd;
@@ -326,6 +333,7 @@ int ampersend(char ** argvec, char * pwd){
             list[j]  = NULL;
             j = 0;
             if(fork() == 0){
+                gpid = getpid();
                 if(execvp(list[0], list) < 0){
                     perror("execute error");
                 }
@@ -340,6 +348,7 @@ int ampersend(char ** argvec, char * pwd){
     list[j] = NULL;
     j = 0;
     if(fork() == 0){
+        gpid = getpid();
         if(execvp(list[0], list) < 0){
             perror("execute error");
         }
@@ -375,6 +384,7 @@ int or_container(char ** argvec, char * pwd){
             list[j]  = NULL;
             j = 0;
             if (fork() == 0){
+                gpid = getpid();
                 if(execvp(list[0], list) >= 0){
                     return 0;
                 }
@@ -389,6 +399,7 @@ int or_container(char ** argvec, char * pwd){
     list[j] = NULL;
     j = 0;
     if(fork() == 0){
+        gpid = getpid();
         if(execvp(list[0], list) >= 0){
             return 0;
         }
@@ -434,6 +445,7 @@ int complete_exec(char ** argvec, char * pwd){
                 return 1;
         }
         pid_t pid = fork();
+        gpid = pid;
         if ((pid == 0) && (io_pipes(argvec) != 1) && (argvec != NULL) && (io_direct_left(argvec) != 1) && (io_direct_right(argvec) != 1)){
             if (execvp(cmd, argvec) < 0){
                 perror("No such command");
@@ -475,11 +487,18 @@ int background_mode(char ** argvec, char * pwd, int k){
     return k;
 }
 
+/* handler, that processing interrupts*/
+void handler(int signo){
+    kill(gpid, SIGINT);
+    printf("\n");
+}
+
 //this function executes commands endlessly and cheks existence of background mode
 int infinity(){
     char ** argvec = NULL;
     char * pwd = getenv("PWD");
     int k = 1;
+    signal(SIGINT, handler);
     while(1){
         print_greetings(pwd);
         argvec = get_list();

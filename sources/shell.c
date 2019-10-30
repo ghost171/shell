@@ -7,7 +7,9 @@
 #include <wait.h>
 #include <fcntl.h>
 #include <string.h>
-
+/* this is color
+    for our freetings row
+    in function print_greeetings*/
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -15,6 +17,16 @@
 #define ANSI_COLOR_MAGENTA "\x1b[35m"
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
+
+int complete_exec(char ** argvec, char * pwd);
+
+/*
+    IMPLEMENTING DIVIDING ON LEXEMS
+*/
+
+/*this function returns words
+    in user's entering data
+    so, it returns the last symbol in the word*/
 
 char * get_word(char * end){
     char ch = EOF;
@@ -35,6 +47,19 @@ char * get_word(char * end){
                 return NULL;
             }
         }
+        if(ch == '<' || ch == '>'){
+            check = (char *)realloc(word, (i + 1) * sizeof(char *));
+            if(check == NULL){
+                err(1, NULL);
+            }
+            word = check;
+            word[i] = ch;
+            i++;
+            word[i + 1] = '\0';
+            *end = ch;
+            puts(word);
+            return word;
+        }
         check = (char *)realloc(word, (i + 1) * sizeof(char));
         if (check == NULL) {
             err(1, NULL);
@@ -48,6 +73,7 @@ char * get_word(char * end){
     return word;
 }
 
+//this function can clear our list(char **)
 char ** free_list(char ** list){
     if(list == NULL){
         return list;
@@ -60,6 +86,8 @@ char ** free_list(char ** list){
 
 }
 
+//this function dividing entering row
+//on lexems(word) for correcting execute
 char **get_list(void)
 {
     char end = 0, **list = NULL, **ch = NULL;
@@ -80,6 +108,13 @@ char **get_list(void)
     return list;
 }
 
+/*
+    IMPLEMENTING PIPE THROUGH 2 PROGRAMS
+*/
+
+/*check existence of 1 pipe
+  returns 0 if it is not exist
+  else 1*/
 int io_pipes(char ** argvec){
     for(int i = 0; argvec[i] != NULL; i++){
         if(strcmp(argvec[i], "|") == 0){
@@ -89,6 +124,7 @@ int io_pipes(char ** argvec){
     return 0;
 }
 
+//implementing pipe through 2 programs
 int exec_pipes(char ** cmd_A, char ** cmd_B){
     int fd[2];
     pipe(fd);
@@ -113,6 +149,8 @@ int exec_pipes(char ** cmd_A, char ** cmd_B){
     return 0;
 }
 
+/*dividing row with pipe on two commands
+  for correcting execute*/
 int pipes(char ** argvec){
     int i = 0;
     char ** cmd_A = NULL;
@@ -134,6 +172,11 @@ int pipes(char ** argvec){
     return 0;
 }
 
+/*
+        IMPLEMENTING REDIRECTION
+*/
+
+//check existence of "<"
 int io_direct_left(char ** argvec){
     for(int i = 0; argvec[i] != NULL; i++){
         if (!strcmp(argvec[i], "<")){
@@ -142,7 +185,7 @@ int io_direct_left(char ** argvec){
     } 
     return 0;
 }
-
+//check existence of ">"
 int io_direct_right(char ** argvec){
     for(int i = 0; argvec[i] != NULL; i++){
         if(!strcmp(argvec[i], ">")){
@@ -152,6 +195,8 @@ int io_direct_right(char ** argvec){
     return 0;
 }
 
+
+//redirect command's output to file
 void direct_exec_right(char ** cmd_A, char ** cmd_B){
     int fd = open(cmd_B[0], O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fork() == 0){
@@ -161,6 +206,7 @@ void direct_exec_right(char ** cmd_A, char ** cmd_B){
     close(fd);
 }
 
+//divide row on file and command
 void direct_to_right(char ** argvec){
     int i = 0;
     char ** cmd_A = NULL;
@@ -181,8 +227,9 @@ void direct_to_right(char ** argvec){
     direct_exec_right(cmd_A, cmd_B);
 }
 
+//redirect file's data to command
 void direct_exec_left(char ** cmd_A, char ** cmd_B){
-    int fd = open(cmd_A[0], O_RDONLY | O_WRONLY , 0755 );
+    int fd = open(cmd_A[0], O_RDONLY, 0755 );
     if (fd < 0){
         printf("error: %s", strerror(errno));
         exit(1);
@@ -193,6 +240,7 @@ void direct_exec_left(char ** cmd_A, char ** cmd_B){
     }
 }
 
+//dividing row on two lexems: command and file
 void direct_to_left(char ** argvec){
     int i = 0;
     char ** cmd_A = NULL;
@@ -213,6 +261,7 @@ void direct_to_left(char ** argvec){
     direct_exec_left(cmd_B, cmd_A);
 }
 
+//print greetings row with important environment variables
 int print_greetings(char * pwd){
     wait(NULL);
     printf(ANSI_COLOR_BLUE  "%s" ANSI_COLOR_RESET,getenv("USER"));
@@ -226,6 +275,7 @@ int print_greetings(char * pwd){
     return 0;
 }
 
+//implement moving through directories
 char * cd_func(char ** argvec, char * pwd){
     wait(NULL);
     char * home = getenv("HOME");
@@ -236,26 +286,135 @@ char * cd_func(char ** argvec, char * pwd){
         chdir(strcat(getenv("PWD"), "/.."));
     }
     else{
-        chdir(argvec[1]);
+        if(chdir(argvec[1]) < 0){
+            perror("Failed to find a direcctory");
+        }
+        else{
         strcat(pwd, "/");
         strcat(pwd, argvec[1]);
+        }
     }
     return pwd;
 }
 
+/*IT'S REALIZE OF "&&" AND "||" CONTAINERS*/
 
+/*  implement "&&" comtainer
+    this function dividing row on 
+    a lot of programs, that must to execute
+    one by one*/
+int ampersend(char ** argvec, char * pwd){
+    int flag = 0;
+    for(int k = 0; argvec[k] != NULL; k++){
+       if(strcmp(argvec[k], "&&") == 0){
+           flag = 1;
+       } 
+    }
 
+    if(flag == 0){
+        return 1;
+    }
+    char ** list = NULL;
+    int j = 0;
+    for(int i = 0; argvec[i] != NULL; i++){
+        if(strcmp(argvec[i], "&&") != 0){
+            list = (char **)realloc(list, sizeof(char *) * (j + 1));
+            list[j] = argvec[i];
+            j++;
+        }
+        if(strcmp(argvec[i], "&&") == 0){
+            list[j]  = NULL;
+            j = 0;
+            if(fork() == 0){
+                if(execvp(list[0], list) < 0){
+                    perror("execute error");
+                }
+                return 0;
+            }
+            int wstatus;
+            wait(&wstatus);
+//            free_list(list);
+            //printf("%d\n", WEXITSTATUS(wstatus));
+        }
+    }
+    list[j] = NULL;
+    j = 0;
+    if(fork() == 0){
+        if(execvp(list[0], list) < 0){
+            perror("execute error");
+        }
+    }
+    int wstatus;
+    wait(&wstatus);
+    //printf("%d\n", WEXITSTATUS(wstatus));
+    return 0;
+}
+
+//realizing "|| " container
+//if one program executes another aren't execute
+int or_container(char ** argvec, char * pwd){
+    int flag = 0;
+    for(int k = 0; argvec[k] != NULL; k++){
+       if(strcmp(argvec[k], "||") == 0){
+           flag = 1;
+       } 
+    }
+
+    if(flag == 0){
+        return 1;
+    }
+    char ** list = NULL;
+    int j = 0;
+    for(int i = 0; argvec[i] != NULL; i++){
+        if(strcmp(argvec[i], "||") != 0){
+            list = (char **)realloc(list, sizeof(char *) * (j + 1));
+            list[j] = argvec[i];
+            j++;
+        }
+        if(strcmp(argvec[i], "||") == 0){
+            list[j]  = NULL;
+            j = 0;
+            if (fork() == 0){
+                if(execvp(list[0], list) >= 0){
+                    return 0;
+                }
+            }
+            int wstatus;
+            wait(&wstatus);
+            return 0;
+//            free_list(list);
+            //printf("%d\n", WEXITSTATUS(wstatus));
+        }
+    }
+    list[j] = NULL;
+    j = 0;
+    if(fork() == 0){
+        if(execvp(list[0], list) >= 0){
+            return 0;
+        }
+    }
+    int wstatus;
+    wait(&wstatus);
+    //printf("%d\n", WEXITSTATUS(wstatus));
+    return 0;
+}
+
+/*this function checks on existense
+  of containers, redirects, pipes, etc.
+  and executes the row that been keep in argvec*/
 int complete_exec(char ** argvec, char * pwd){
     if(argvec != NULL){
         char * cmd = argvec[0];
-        /*if (!ampersend(argvec)){
-            return 0;
-        }*/
-        if (strcmp(argvec[0], "cd") == 0){
-            pwd = cd_func(argvec, pwd);
+        if (io_pipes(argvec) == 1){
+            pipes(argvec);
+        }
+        if (!ampersend(argvec, pwd)){
             return 0;
         }
-        if(io_direct_left(argvec)){
+        if(!or_container(argvec, pwd)){
+            return 0;
+        }
+         if(io_direct_left(argvec)){
             direct_to_left(argvec);
             return 0;
         }
@@ -263,9 +422,12 @@ int complete_exec(char ** argvec, char * pwd){
             direct_to_right(argvec);
             return 0;
         }
-        if (io_pipes(argvec) == 1){
-            pipes(argvec);
+        
+        if (strcmp(argvec[0], "cd") == 0){
+            pwd = cd_func(argvec, pwd);
+            return 0;
         }
+       
         if(argvec != NULL && ((strcmp(cmd, "exit") == 0) || 
           (strcmp(cmd, "quit") == 0))){
                 free_list(argvec);
@@ -275,6 +437,7 @@ int complete_exec(char ** argvec, char * pwd){
         if ((pid == 0) && (io_pipes(argvec) != 1) && (argvec != NULL) && (io_direct_left(argvec) != 1) && (io_direct_right(argvec) != 1)){
             if (execvp(cmd, argvec) < 0){
                 perror("No such command");
+                return 0;
                 if (pid == 0){
                     return 1;
                 }
@@ -289,6 +452,9 @@ int complete_exec(char ** argvec, char * pwd){
     return 0;
 }
 
+
+/*this function implements background mode of programs
+  and prints his number and pid                       */
 int background_mode(char ** argvec, char * pwd, int k){
     int i = 0;
     for(i = 0; argvec[i] != NULL; i++);
@@ -301,7 +467,7 @@ int background_mode(char ** argvec, char * pwd, int k){
                 perror("No such command");
                 return k;
             }
-            //complete_exec(argvec, pwd, k);
+            complete_exec(argvec, pwd);
         }
         k++;
         return k;
@@ -309,29 +475,7 @@ int background_mode(char ** argvec, char * pwd, int k){
     return k;
 }
 
-/*int ampersend(char ** argvec){
-    for(int k = 0; argvec[k] != NULL; k++){
-       if(strcmp(argvec[k], "&&") == 0){
-           return 1;
-       } 
-    }
-    int i = 0;
-    char * word = NULL;
-    char ** list = NULL;
-    for(i = 0;strcmp(argvec[i], "\n") == 0; i++){
-        int j = 0;
-        for(int k = 0; k < strlen(argvec[i]); k++)
-        {
-            word[j] = argvec[i][j];
-            j++;
-        }
-        if(strcmp(argvec[i], "&&") == 0){
-            //complete_exec(list);            
-        }
-        i++;
-    }
-}*/
-
+//this function executes commands endlessly and cheks existence of background mode
 int infinity(){
     char ** argvec = NULL;
     char * pwd = getenv("PWD");
@@ -348,6 +492,7 @@ int infinity(){
         }        
     }
 
+//this is main:)
 int main(int argc, char ** argv){
     infinity();
     return 0;

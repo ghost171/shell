@@ -15,3 +15,7 @@ Implemented && and || containers.
 I have got worked redirect system.
 Improved my lexems dividing for input redirects(<, >)
 without indents.
+
+version 1.0
+In my final version of shell I add n pipes technology.
+The next is debugging.

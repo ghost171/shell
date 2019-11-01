@@ -1,0 +1,6 @@
+total 52
+drwxrwxr-x. 2 Ghost Ghost  4096 Oct 30 20:49 .
+drwxrwxr-x. 5 Ghost Ghost  4096 Oct 30 18:40 ..
+-rw-------. 1 Ghost Ghost     0 Oct 30 20:49 input.txt
+-rwxrwxr-x. 1 Ghost Ghost 28472 Oct 30 20:49 shell
+-rw-rw-r--. 1 Ghost Ghost 13165 Oct 30 20:48 shell.c

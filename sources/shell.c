@@ -31,7 +31,6 @@ pid_t gpid;
 /*this function returns words
     in user's entering data
     so, it returns the last symbol in the word*/
-
 char * get_word(char * end){
     char ch = EOF;
     int i = 0;
@@ -51,6 +50,22 @@ char * get_word(char * end){
                 return NULL;
             }
         }
+        if(ch == '"'){
+            ch = getchar();
+            while(ch != '"'){
+                check = (char *)realloc(word, (i + 1) * sizeof(char));
+                if(check == NULL){
+                    err(1, NULL);
+                }
+                word = check;
+                word[i] = ch;
+                i++;
+                word[i + 1] = '\0';
+                *end = ch;
+                ch = getchar();
+            }
+            return word;
+        }
         if(ch == '<' || ch == '>'){
             check = (char *)realloc(word, (i + 1) * sizeof(char *));
             if(check == NULL){
@@ -61,7 +76,6 @@ char * get_word(char * end){
             i++;
             word[i + 1] = '\0';
             *end = ch;
-            puts(word);
             return word;
         }
         check = (char *)realloc(word, (i + 1) * sizeof(char));
@@ -177,6 +191,145 @@ int pipes(char ** argvec){
     return 0;
 }
 
+void del_w(char **cmd, int n) {
+    char *word;
+    while (cmd[n + 1] != NULL) {
+        word = cmd[n];
+        cmd[n] = cmd[n + 1];
+        cmd[n + 1] = word;
+        n++;
+    }
+    free(cmd[n]);
+    free(cmd[n + 1]);
+    cmd[n] = NULL;
+}
+
+//check redirect in pipes_row
+int check_redirect(char **argvec) {
+    int fd, i = 0;
+    while (argvec[i] != NULL) {
+        if (strcmp(argvec[i], ">") == 0) {
+            fd = open(argvec[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (fd < 0) {
+                perror("failed to open file after <");
+                exit(1);
+            }
+            dup2(fd, 1);
+            break;
+        } else if (strcmp(argvec[i], "<") == 0) {
+            fd = open(argvec[i + 1], O_RDONLY);
+            if (fd < 0) {
+                perror("failed to open file after >");
+                exit(1);
+            }
+            dup2(fd, 0);
+            break;
+        }
+        i++;
+    }
+    if (argvec[i] != NULL) {
+        del_w(argvec, i);
+        del_w(argvec, i);
+    }
+    return fd;
+}
+
+//This function frees char***
+void free_3_arr(char ***argvec) {
+    for (int i = 0; argvec[i] != NULL; i++) {
+        for (int j = 0; argvec[i][j] != NULL; j++) {
+            free(argvec[i][j]);
+        }
+        free(argvec[i]);
+    }
+    free(argvec);
+}
+
+//
+void n_pipes(char ***argvec, int n) {
+    int fd1, fd2;
+    fd1 = check_redirect(argvec[0]);
+    fd2 = check_redirect(argvec[n - 1]);
+    int pipefd[n - 1][2], pid;
+    for (int i = 0; i < n; i++) {
+        if (i != n - 1) {
+            pipe(pipefd[i]);
+        }
+        if ((pid = fork()) == 0) {
+            if (i != 0) {
+                dup2(pipefd[i - 1][0], 0);
+            }
+            if (i != n - 1) {
+                dup2(pipefd[i][1], 1);
+            }
+            for (int j = 0; j < i + 1; j++) {
+                if (j == n - 1) {
+                    break;
+                }
+                close(pipefd[j][0]);
+                close(pipefd[j][1]);
+            }
+            if (execvp(argvec[i][0], argvec[i]) < 0) {
+                perror("exec failed");
+                close(fd1);
+                close(fd2);
+                exit(1);
+            }
+        }
+    }
+    for (int i = 0; i < n; i ++) {
+        if (i != n - 1) {
+            close(pipefd[i][0]);
+            close(pipefd[i][1]);
+        }
+        wait(NULL);
+    }
+    if (fd1 != 0 && fd1 != 1) {
+        close(fd1);
+    }
+    if (fd2 != 0 && fd2 != 1) {
+        close(fd2);
+    }
+}
+
+//This function calculate the count of pipes in the row
+int count_pipes(char ** argvec){
+    int k = 0;
+    for(int i = 0; argvec[i] != NULL; i++){
+        if(strcmp(argvec[i], "|") == 0){
+            k++;
+        }
+    }
+    return k;
+}
+
+//this function converts char*** to char**
+void conversion(char ** argvec){
+    char *** argvec1 = malloc(sizeof(char **) * (count_pipes(argvec) + 1));
+    char ** list = NULL;
+    int k = 0;
+    int y = 0;
+    for(int i = 0; argvec[i] != NULL; i++){
+        if(strcmp(argvec[i], "|") == 0){
+            argvec1[k] = list;
+            k++;
+            y = 0;
+            list = (char **)malloc(sizeof(char *));
+            continue;
+        } 
+        list = (char **)realloc(list, (y + 1) * sizeof(char **));
+        list[y] = argvec[i];
+        y++;
+    
+    } 
+    argvec1[k] = list;
+    k++;
+    y = 0;
+    list = (char **)malloc(sizeof(char *));
+    int n = count_pipes(argvec) + 1;
+    n_pipes(argvec1 , n);
+}
+
 /*
         IMPLEMENTING REDIRECTION
 */
@@ -237,7 +390,7 @@ void direct_to_right(char ** argvec){
 void direct_exec_left(char ** cmd_A, char ** cmd_B){
     int fd = open(cmd_A[0], O_RDONLY, 0755 );
     if (fd < 0){
-        printf("error: %s", strerror(errno));
+        //printf("error: %s", strerror(errno));
         exit(1);
     }
     if (fork() == 0){
@@ -341,8 +494,6 @@ int ampersend(char ** argvec, char * pwd){
             }
             int wstatus;
             wait(&wstatus);
-//            free_list(list);
-            //printf("%d\n", WEXITSTATUS(wstatus));
         }
     }
     list[j] = NULL;
@@ -355,7 +506,6 @@ int ampersend(char ** argvec, char * pwd){
     }
     int wstatus;
     wait(&wstatus);
-    //printf("%d\n", WEXITSTATUS(wstatus));
     return 0;
 }
 
@@ -392,8 +542,6 @@ int or_container(char ** argvec, char * pwd){
             int wstatus;
             wait(&wstatus);
             return 0;
-//            free_list(list);
-            //printf("%d\n", WEXITSTATUS(wstatus));
         }
     }
     list[j] = NULL;
@@ -406,18 +554,17 @@ int or_container(char ** argvec, char * pwd){
     }
     int wstatus;
     wait(&wstatus);
-    //printf("%d\n", WEXITSTATUS(wstatus));
     return 0;
 }
 
+
+
 /*this function checks on existense
-  of containers, redirects, pipes, etc.
-  and executes the row that been keep in argvec*/
-int complete_exec(char ** argvec, char * pwd){
-    if(argvec != NULL){
-        char * cmd = argvec[0];
+  of containers, redirects, pipes, etc.*/
+int check(char ** argvec, char * pwd){
         if (io_pipes(argvec) == 1){
-            pipes(argvec);
+            conversion(argvec);
+            return 0;
         }
         if (!ampersend(argvec, pwd)){
             return 0;
@@ -438,7 +585,16 @@ int complete_exec(char ** argvec, char * pwd){
             pwd = cd_func(argvec, pwd);
             return 0;
         }
-       
+        return 1;
+}
+
+  /* this function executes the row that been keep in argvec*/
+int complete_exec(char ** argvec, char * pwd){
+    if(argvec != NULL){
+        char * cmd = argvec[0];
+        if(!check(argvec, pwd)){
+            return 0;
+        }        
         if(argvec != NULL && ((strcmp(cmd, "exit") == 0) || 
           (strcmp(cmd, "quit") == 0))){
                 free_list(argvec);
@@ -449,7 +605,6 @@ int complete_exec(char ** argvec, char * pwd){
         if ((pid == 0) && (io_pipes(argvec) != 1) && (argvec != NULL) && (io_direct_left(argvec) != 1) && (io_direct_right(argvec) != 1)){
             if (execvp(cmd, argvec) < 0){
                 perror("No such command");
-                return 0;
                 if (pid == 0){
                     return 1;
                 }
@@ -511,7 +666,7 @@ int infinity(){
         }        
     }
 
-//this is main:)
+//this is main, it's just for infinity() execute
 int main(int argc, char ** argv){
     infinity();
     return 0;

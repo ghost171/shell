@@ -1,2 +1,2 @@
 %:	%.c
-	gcc	$@.c	-o	$@	-Wall	-Werror	&&	./$@
+	gcc	$@.c	-o	$@	-Wall	-Werror

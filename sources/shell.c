@@ -81,7 +81,7 @@ char * get_word(char * end){
         if(ch == '&'){
            ch1 = getchar();
            if(ch1 == '&'){
-               check = (char *)realloc(word, (i + 1) * sizeof(char *));
+               check = (char *)realloc(word, (i + 2) * sizeof(char *));
                if(check == NULL){
                    err(1, NULL);
                }
@@ -126,7 +126,7 @@ char ** free_list(char ** list){
 char **get_list(void)
 {
     char end = 0, **list = NULL; 
-    char prev_end;
+    //char prev_end;
     int i = 0;
     do{
         list = (char **)realloc(list, (i + 1) * sizeof(char *));
@@ -139,18 +139,20 @@ char **get_list(void)
             list[i] = (char *)malloc(sizeof(char));
             list[i][0] = end;
         }
-        //if(strlen(list[i]) >= 2){
-            //prev_end = list[i][strlen(list[i]) - 2];
-            /*if(end == '&' && prev_end == '&' && strlen(list[i]) >= 2){
-                list[i][strlen(list[i]) - 1] = '\0';
-                list[i][strlen(list[i]) - 2] = '\0';
-                i++;
-                list = (char **)realloc(list, (i + 1) * sizeof(char));
-                list[i] = (char *)malloc(sizeof(char) * 2);
-                list[i][0] = prev_end;
-                list[i][1] = end;
-            }*/
-        //}
+        if(end == '&'){
+            if(strlen(list[i]) > 2){
+                char prev_end = list[i][strlen(list[i]) - 2];
+                if(end == '&' && prev_end == '&'){
+                    list[i][strlen(list[i]) - 1] = '\0';
+                    list[i][strlen(list[i]) - 1] = '\0';
+                    i++;
+                    list = (char **)realloc(list, (i + 1) * sizeof(char));
+                    list[i] = (char *)malloc(sizeof(char) * 2);
+                    list[i][0] = prev_end;
+                    list[i][1] = end;
+                }
+            }
+        }
         if(list[0] == NULL){
             return NULL;
         }

@@ -36,13 +36,19 @@ What is the pipes technology?
     It is named by analogy to a physical pipeline. 
     A key feature of these pipelines is their "hiding of internals" (Ritchie & Thompson, 1974). 
     This in turn allows for more clarity and simplicity in the system.
+    Examples:
+    ls && pwd && date
+    asdfsadf || pwd
+    The first command outputs: What in the current directory, where yo are and today's date.
 What are the redirects?
 -----------------------
     In computing, redirection is a form of interprocess communication, and is a function common to most command-line          
     interpreters, including the various Unix shells that can redirect standard streams to user-specified locations.
     Examples:
-    grep .c < ls
+    grep .c < 1.txt
     ls -la > 1.txt
+    First command chooses rows in file "1.txt" with text, ".c" and output it in the standart output thread.
+    Second command writes the result of ls -la command to the file 1.txt.
     In Unix-like operating systems, programs do redirection with the dup2(2) system call, or its less-flexible but higher-level     
     stdio analogues.
 

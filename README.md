@@ -8,12 +8,12 @@ The shell is both an interactive command language
 and a scripting language, and is used by the operating system
 to control the execution of the system using shell scripts.**
 
-    Users typically interact with a Unix shell using
-    a terminal emulator; however, direct operation via serial
-    hardware connections or Secure Shell are common for server systems.
-    All Unix shells provide filename wildcarding, piping, here documents,
-    command substitution, variables and control structures for
-    condition-testing and iteration.
+Users typically interact with a Unix shell using
+a terminal emulator; however, direct operation via serial
+hardware connections or Secure Shell are common for server systems.
+All Unix shells provide filename wildcarding, piping, here documents,
+command substitution, variables and control structures for
+condition-testing and iteration.
 
 How you can use it?
 -------------------
@@ -27,9 +27,9 @@ How you can use it?
 
 What is the pipes technology?
 ------------------------------
-In Unix-like computer operating systems, a pipeline is a mechanism for inter-process communication using message passing. 
-**A pipeline is a set of processes chained together by their standard streams, 
-so that the output text of each process (stdout) is passed directly as input (stdin) to the next one. **
+    In Unix-like computer operating systems, a pipeline is a mechanism for inter-process communication using message passing.   
+    A pipeline is a set of processes chained together by their standard streams, 
+    so that the output text of each process (stdout) is passed directly as input (stdin) to the next one. **
     The first process is not completed before the second is started, but they are executed concurrently. 
     The concept of pipelines was championed by Douglas McIlroy at Unix's ancestral home of Bell Labs, 
     during the development of Unix, shaping its toolbox philosophy. 
@@ -38,11 +38,13 @@ so that the output text of each process (stdout) is passed directly as input (st
     This in turn allows for more clarity and simplicity in the system.
 What are the redirects?
 -----------------------
-    In computing, redirection is a form of interprocess communication, and is a function common to most command-line interpreters, including the various Unix shells that can redirect standard streams to user-specified locations.
+    In computing, redirection is a form of interprocess communication, and is a function common to most command-line          
+    interpreters, including the various Unix shells that can redirect standard streams to user-specified locations.
     Examples:
     grep .c < ls
     ls -la > 1.txt
-In Unix-like operating systems, programs do redirection with the dup2(2) system call, or its less-flexible but higher-level stdio analogues.
+    In Unix-like operating systems, programs do redirection with the dup2(2) system call, or its less-flexible but higher-level     
+    stdio analogues.
 
 How move through directories?
 -----------------------------
@@ -81,5 +83,5 @@ version 0.5
 
 version 1.0
 -----------
-Final version of shell has got n pipes technology.
+    Final version of shell has got n pipes technology.
 

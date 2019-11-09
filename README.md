@@ -25,7 +25,7 @@ To exit from this shell you can enter "exit" or "quit".
 4)You can interrupt lust executing program with Ctrl+C.
 5)You can execute && or || containers.
 
-What is the pipes technology?
+What are the pipes?
 ------------------------------
 In Unix-like computer operating systems, a pipeline is a mechanism for inter-process communication using message passing.   
 A pipeline is a set of processes chained together by their standard streams, 
@@ -33,9 +33,7 @@ so that the output text of each process (stdout) is passed directly as input (st
 The first process is not completed before the second is started, but they are executed concurrently. 
 The concept of pipelines was championed by Douglas McIlroy at Unix's ancestral home of Bell Labs, 
 during the development of Unix, shaping its toolbox philosophy. 
-It is named by analogy to a physical pipeline. 
-A key feature of these pipelines is their "hiding of internals" (Ritchie & Thompson, 1974). 
-This in turn allows for more clarity and simplicity in the system.
+It is named by analogy to a physical pipeline. .
 
 Examples:
     
@@ -69,6 +67,7 @@ Command cd or cd ~.Move you to the home directory.
     cd
     cd ~
     cd Documents
+    
 How to use && and || container.
 -------------------------------
 Used to build AND lists, it allows you to run one command only if another exited successfully.

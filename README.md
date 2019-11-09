@@ -17,7 +17,12 @@ condition-testing and iteration.
 
 How you can use it?
 -------------------
+to compile program you can use:
+
+    make -B shell
 To execute program you can enter "./shell" command.
+
+    ./shell
 To exit from this shell you can enter "exit" or "quit".
 1)You can execute any count of pipes with "|" symbol.
 2)You can execute redirection to left or right with command "<" or ">".

@@ -85,7 +85,7 @@ The first command outputs: What in the current directory, where yo are and today
 Exmaples:
     
     asdfsadf || pwd
-This command executes pwd, if program ./shell returns error.
+This command executes pwd, because the first input program  returns error.
 
 Interrupts
 ----------
@@ -101,11 +101,22 @@ Interrupts are commonly used by hardware devices to indicate electronic or physi
 Interrupts are also commonly used to implement computer multitasking, especially in real-time computing. Systems that use 
 interrupts in these ways are said to be interrupt-driven.
     
-    You can use interrupts with command Ctrl+C.
+    You can use interrupts with buttons combination Ctrl+C.
+
+How to compile programs:
+------------------------
+You can compile program with command gcc:
+Example:
+    
+    gcc (Name_of_program).c -o (Name_of_program) -Wall -Werror
+How to execute programs:
+-----------------------
+You can execute program with  "./" prefix:
+    ./shell
 
 Version 0.1
 ------------
-It's the first version of my shell,
+It's the first version of shell,
 Raw divided on input strings - lexems(get_list(), get_word()) and
 implement execution of simple programs(infinity()).
 Also in pipes(), I realized pipes through 2 programs.

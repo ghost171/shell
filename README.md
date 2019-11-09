@@ -140,5 +140,5 @@ Improved lexems dividing for input redirects(<, >) without indents.
 
 Version 1.0
 -----------
-Final version of shell has got n pipes technology.
+Final version of shell has got n pipes.
 

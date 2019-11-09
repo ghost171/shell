@@ -238,56 +238,11 @@ void free_3_char(char ***argvec) {
     free(argvec);
 }
 
-void del_w(char **cmd, int n) {
-    char *word;
-    while (cmd[n + 1] != NULL) {
-        word = cmd[n];
-        cmd[n] = cmd[n + 1];
-        cmd[n + 1] = word;
-        n++;
-    }
-    free(cmd[n]);
-    free(cmd[n + 1]);
-    cmd[n] = NULL;
-}
-
-//check redirect in pipes_row
-int check_redirect(char **argvec) {
-    int fd, i = 0;
-    while (argvec[i] != NULL) {
-        if (strcmp(argvec[i], ">") == 0) {
-            fd = open(argvec[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-            if (fd < 0) {
-                perror("failed to open file after <");
-                exit(1);
-            }
-            dup2(fd, 1);
-            break;
-        } else if (strcmp(argvec[i], "<") == 0) {
-            fd = open(argvec[i + 1], O_RDONLY);
-            if (fd < 0) {
-                perror("failed to open file after >");
-                exit(1);
-            }
-            dup2(fd, 0);
-            break;
-        }
-        i++;
-    }
-    if (argvec[i] != NULL) {
-        del_w(argvec, i);
-        del_w(argvec, i);
-    }
-    return fd;
-}
 
 
 
 //redirect threads fot n pipes technology
 void n_pipes(char ***argvec, int n) {
-    int fd1, fd2;
-    fd1 = check_redirect(argvec[0]);
-    fd2 = check_redirect(argvec[n - 1]);
     int pipefd[n - 1][2], pid;
     for (int i = 0; i < n; i++) {
         if (i != n - 1) {
@@ -312,8 +267,6 @@ void n_pipes(char ***argvec, int n) {
             if (execvp(argvec[i][0], argvec[i]) < 0) {
                 free_3_char(argvec);
                 perror("exec failed");
-                close(fd1);
-                close(fd2);
                 exit(1);
             }
         }
@@ -324,12 +277,6 @@ void n_pipes(char ***argvec, int n) {
             close(pipefd[i][1]);
         }
         wait(NULL);
-    }
-    if (fd1 != 0 && fd1 != 1) {
-        close(fd1);
-    }
-    if (fd2 != 0 && fd2 != 1) {
-        close(fd2);
     }
 }
 

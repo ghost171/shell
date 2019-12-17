@@ -131,6 +131,7 @@ char **get_list(void)
     do{
         list = (char **)realloc(list, (i + 1) * sizeof(char *));
         list[i] = get_word(&end);
+        //puts(list[i]);
         if((end == '|' || end == '>' || end == '<') && strlen(list[i]) != 1){
             //puts(list[i]);
             list[i][strlen(list[i]) - 1] = '\0';
@@ -152,6 +153,17 @@ char **get_list(void)
                     list[i][1] = end;
                 }
             }
+        }
+        if(i > 0){
+            if(list[i - 1][0] == '|' && end == '|' && strlen(list[i]) == 1){
+                list[i - 1] = (char *)realloc(list[i - 1], 3 * sizeof(char));
+                list[i - 1][0] = '|';
+                list[i - 1][1] = '|';
+                list[i - 1][2] = '\0';
+                free(list[i]);
+                i--;
+                
+            }   
         }
         if(list[0] == NULL){
             return NULL;
@@ -228,7 +240,7 @@ int pipes(char ** argvec){
 
 
 //This function frees char***
-void free_3_char(char ***argvec) {
+void free_char_ptr3(char ***argvec) {
     for (int i = 0; argvec[i] != NULL; i++) {
         for (int j = 0; argvec[i][j] != NULL; j++) {
             free(argvec[i][j]);
@@ -242,7 +254,7 @@ void free_3_char(char ***argvec) {
 
 
 //redirect threads fot n pipes technology
-void n_pipes(char ***argvec, int n) {
+void pipes_n(char ***argvec, int n) {
     int pipefd[n - 1][2], pid;
     for (int i = 0; i < n; i++) {
         if (i != n - 1) {
@@ -265,7 +277,7 @@ void n_pipes(char ***argvec, int n) {
                 close(pipefd[j][1]);
             }
             if (execvp(argvec[i][0], argvec[i]) < 0) {
-                free_3_char(argvec);
+                free_char_ptr3(argvec);
                 perror("exec failed");
                 exit(1);
             }
@@ -312,7 +324,7 @@ void conversion(char ** argvec){
     
     } 
     argvec1[k] = list;
-    n_pipes(argvec1 , pipes_number);
+    pipes_n (argvec1 , pipes_number);
 }
 
 /*
@@ -411,9 +423,9 @@ int print_greetings(){
     wait(NULL);
     printf(ANSI_COLOR_BLUE  "%s" ANSI_COLOR_RESET,getenv("USER"));
     printf(ANSI_COLOR_CYAN "@" ANSI_COLOR_RESET);
-    char * name = (char *)malloc(sizeof(char)  * 10);
-    gethostname(name, 9);
-    name[9] = '\0';
+    char * name = (char *)malloc(sizeof(char)  * 50);
+    gethostname(name, 50);
+    name[50] = '\0';
     fputs(name, stdout);
     printf(ANSI_COLOR_CYAN ":" ANSI_COLOR_RESET);
     printf(ANSI_COLOR_GREEN "%9s" ANSI_COLOR_RESET, getenv("PWD"));
@@ -508,7 +520,6 @@ int or_container(char ** argvec){
            flag = 1;
        } 
     }
-
     if(flag == 0){
         return 1;
     }
@@ -525,32 +536,41 @@ int or_container(char ** argvec){
             j = 0;
             if (fork() == 0){
                 gpid = getpid();
-                if(execvp(list[0], list) >= 0){
-                    return 0;
+                int status = execvp(list[0], list);
+                if (status != 0) {
+                    perror("error");
                 }
-                else{
-                    perror("No such command");
-                    return 0;
-                }
+               
+                exit(status);
             }
             int wstatus;
             wait(&wstatus);
-            return 0;
+            if (wstatus == 0) {
+                break;
+            }
         }
     }
-    list[j] = NULL;
-    j = 0;
-    if(fork() == 0){
-        gpid = getpid();
-        if(execvp(list[0], list) >= 0){
-            return 0;
-        } else {
-            perror("No such command");
-            return 0;
+    
+    if (j > 0) {
+        list[j] = NULL;
+        j = 0;
+        if (fork() == 0){   
+            gpid = getpid();
+            int status = execvp(list[0], list);
+            if (status < 0) {
+                perror("error");
+            }
+            return status;
         }
+        int wstatus;
+        wait(&wstatus);
     }
-    int wstatus;
-    wait(&wstatus);
+
+    for(int i = 0; argvec[i] != NULL; i++){
+        free(argvec[i]);
+    }
+    free(argvec);
+
     return 0;
 }
 
@@ -641,9 +661,10 @@ int background_mode(char ** argvec, int k){
 
 /* handler, that processing interrupts*/
 void handler(int signo){
-    kill(gpid, SIGINT);
     printf("\n");
+    return;
 }
+
 
 //this function executes commands endlessly and cheks existence of background mode
 int infinity(){

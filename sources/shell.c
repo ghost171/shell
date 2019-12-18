@@ -255,26 +255,27 @@ void free_char_ptr3(char ***argvec) {
 
 //redirect threads fot n pipes technology
 void pipes_n(char ***argvec, int n) {
-    int pipefd[n - 1][2], pid;
+    int pipes[n - 1][2], pid;
     for (int i = 0; i < n; i++) {
         if (i != n - 1) {
-            pipe(pipefd[i]);
+            pipe(pipes[i]);
         }
 
         if ((pid = fork()) == 0) {
             gpid = getpid();
             if (i != 0) {
-                dup2(pipefd[i - 1][0], 0);
+                dup2(pipes[i - 1][0], 0);
             }
             if (i != n - 1) {
-                dup2(pipefd[i][1], 1);
+                dup2(pipes[i][1], 1);
             }
             for (int j = 0; j < i + 1; j++) {
                 if (j == n - 1) {
                     break;
                 }
-                close(pipefd[j][0]);
-                close(pipefd[j][1]);
+                close(pipes[j][1]);
+                close(pipes[j][0]);
+                
             }
             if (execvp(argvec[i][0], argvec[i]) < 0) {
                 free_char_ptr3(argvec);
@@ -285,8 +286,9 @@ void pipes_n(char ***argvec, int n) {
     }
     for (int i = 0; i < n; i ++) {
         if (i != n - 1) {
-            close(pipefd[i][0]);
-            close(pipefd[i][1]);
+            close(pipes[i][1]);
+            close(pipes[i][0]);
+            
         }
         wait(NULL);
     }
